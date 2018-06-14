@@ -24,6 +24,17 @@ class BooksApp extends React.Component {
     })
   }
 
+  moveBook(book, toShelf) {
+    console.log(book)
+    console.log(toShelf)
+    BooksAPI.update(book, toShelf).then(book => {
+      this.setState(state => ({
+        shelvedBooks: state.shelvedBooks.filter((b) => b.id !== book.id).concat( [ book ])
+      }))
+    })
+
+  }
+
   render() {
     console.log(this.state)
     return (
@@ -62,7 +73,11 @@ class BooksApp extends React.Component {
                       <BookShelf
                         key={ title.id }
                         shelfTitle={ title }
-                        booksList={this.state.shelvedBooks.filter((book) => book.shelf === title.id)}
+                        books={this.state.shelvedBooks.filter((book) => book.shelf === title.id)}
+                        onMoveBook={(book, shelf) => {
+                                      this.moveBook(book, shelf)
+                                      // history.push('/')
+                                    }}
                       />
                     )
                 })}
