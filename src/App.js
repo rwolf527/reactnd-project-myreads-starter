@@ -7,19 +7,20 @@ import { Route, Link } from 'react-router-dom';
 
 class BooksApp extends React.Component {
   state = {
-      shelveTitles: [{title: 'Currently Reading', id: 'currentlyReading'},
-                     {title: 'Want to Read', id: 'wantToRead'},
-                     {title: 'Read', id: 'read'}
-                    ],
-      shelvedBooks: [
+      shelves: [{title: 'Currently Reading', id: 'currentlyReading'},
+                {title: 'Want to Read', id: 'wantToRead'},
+                {title: 'Read', id: 'read'}
+                ],
+      books: [
       ]
   }
 
   componentDidMount() {
+    console.log('componentDidMount . . .')
     // BooksAPI.search('Astronomy').then((shelvedBooks) => {
-      BooksAPI.getAll().then((shelvedBooks) => {
-        console.log(shelvedBooks)
-        this.setState({ shelvedBooks })
+      BooksAPI.getAll().then((books) => {
+        console.log(books)
+        this.setState({ books })
       })
   }
 
@@ -30,7 +31,9 @@ class BooksApp extends React.Component {
     // Now call the API to update the database for later
     BooksAPI.update(book, toShelf).then(() => {
       this.setState((state) => ({
-        shelvedBooks: state.shelvedBooks.filter((b) => b.id !== book.id).concat(book)
+        // Filter this book (using id) from the state list of shelved Books and then
+        // add the updated version of this book that now has the new shelf value
+        books: state.books.filter((b) => b.id !== book.id).concat(book)
       }))
     })
   }
@@ -47,12 +50,13 @@ class BooksApp extends React.Component {
 
                   <div className="list-books-content">
                     <div>
-                        {this.state.shelveTitles.map((title) => {
+                        {this.state.shelves.map((shelf) => {
                             return (
                               <BookShelf
-                                key={ title.id }
-                                shelfTitle={ title }
-                                books={this.state.shelvedBooks.filter((book) => book.shelf === title.id)}
+                                key={ shelf.id }
+                                shelfListForDropdown={ this.state.shelves }
+                                shelfTitle={ shelf.title }
+                                books={this.state.books.filter((book) => book.shelf === shelf.id)}
                                 onMoveBook={(book, shelf) => {
                                               this.moveBook(book, shelf)
                                               history.push('/')

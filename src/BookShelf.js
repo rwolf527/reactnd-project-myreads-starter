@@ -1,15 +1,17 @@
 import React, { Component } from 'react'
 import BookShelfChanger from './BookShelfChanger'
+import sortBy from 'sort-by';
 
 class BookShelf extends Component {
     render() {
-        const {books, shelfTitle, onMoveBook } = this.props
+        const {books, shelfListForDropdown, shelfTitle, onMoveBook } = this.props
+        books.sort(sortBy('title'))
 
         return (
             <div className="list-books-content">
               <div>
                   <div className="bookshelf">
-                    <h2 className="bookshelf-title">{shelfTitle.title}</h2>
+                    <h2 className="bookshelf-title">{shelfTitle}</h2>
 
                         <div className="bookshelf-books">
                           <ol className="books-grid">
@@ -23,7 +25,10 @@ class BookShelf extends Component {
                                                        height: "193px",
                                                        backgroundImage: `url(${book.imageLinks.thumbnail})`
                                                    }}>
-                                                  <BookShelfChanger book={ book } onMoveBook={ onMoveBook }/>
+                                                  <BookShelfChanger
+                                                      shelfListForDropdown = { shelfListForDropdown }
+                                                      book={ book }
+                                                      onMoveBook={ onMoveBook }/>
                                               </div>
                                           </div>
                                           <div className="book-title">{book.title}</div>
