@@ -3,25 +3,34 @@ import './App.css'
 import BookShelf from './BookShelf'
 import * as BooksAPI from './utils/BooksAPI';
 import {Route, Link} from 'react-router-dom';
+import {throttle, debounce} from "throttle-debounce";
 
 class BooksApp extends React.Component {
-    state = {
-        shelves: [
-            {
-                title: 'Currently Reading',
-                id: 'currentlyReading'
-            }, {
-                title: 'Want to Read',
-                id: 'wantToRead'
-            }, {
-                title: 'Read',
-                id: 'read'
-            }
-        ],
-        books: [],
-        searchResults: [],
-        query: ''
-    }
+    constructor(props) {
+        super(props);
+        this.state = {
+            shelves: [
+                {
+                    title: 'Currently Reading',
+                    id: 'currentlyReading'
+                }, {
+                    title: 'Want to Read',
+                    id: 'wantToRead'
+                }, {
+                    title: 'Read',
+                    id: 'read'
+                }
+            ],
+            books: [],
+            searchResults: [],
+            query: ''};
+        this.autocompleteSearchDebounced = debounce(500, this.autocompleteSearch);
+        this.autocompleteSearchThrottled = throttle(500, this.autocompleteSearch);
+      }
+
+    autocompleteSearch = q => {
+        this._performQuery(q);
+    };
 
     getCurrentShelf(book) {
         // This method will look for the given book in the set of books in our state object
@@ -32,34 +41,48 @@ class BooksApp extends React.Component {
         if (locatedBookList.length > 0) {
             return locatedBookList[0].shelf
         } else {
-            // book was not found, return the string "moveTo" so the dropdown will display the "moveTo"
+            // book was not found, return the string "none" so the dropdown will display the correct option
             // option indicating that the book is NOT on any shelf yet.
-            return "moveTo"
+            return "none"
         }
     }
 
-    updateQuery = (query) => {
-        let trimmedQuery = query.trim()
-        BooksAPI.search(trimmedQuery).then((searchResults) => {
-            console.log("Search Results\n" + {
-                searchResults
+
+    updateQuery = query => {
+      this.setState({ query }, () => {
+        const q = this.state.query;
+        if (q.length < 5 || q.endsWith(' ')) {
+          this.autocompleteSearchThrottled(this.state.query);
+        } else {
+          this.autocompleteSearchDebounced(this.state.query);
+        }
+      });
+    };
+
+    _performQuery = (query) => {
+        if (query.trim().length > 0) {
+            BooksAPI.search(query).then((searchResults) => {
+                if (searchResults && !searchResults.error && searchResults.length > 0) {
+                    let updatedSearchResults = []
+                    if (!searchResults.error) {
+                        updatedSearchResults = searchResults.map((book) => {
+                            book.shelf = this.getCurrentShelf(book)
+                            return book
+                        })
+                    }
+
+                    this.setState({searchResults: updatedSearchResults})
+                } else {
+                    this.setState({searchResults: []})
+                }
             })
-            if (searchResults && searchResults.length > 0) {
-
-                let updatedSearchResults = searchResults.map((book) => {
-                    book.shelf = this.getCurrentShelf(book)
-                    return book
-                })
-
-                this.setState({query: trimmedQuery, searchResults: updatedSearchResults})
-            } else {
-                this.setState({query: trimmedQuery})
-            }
-        })
+        } else {
+            this.setState({searchResults: []})
+        }
     }
 
     clearQuery = () => {
-        this.setState({query: ''})
+        this.setState({query: '', searchResults: []})
     }
 
     componentDidMount() {
@@ -84,7 +107,7 @@ class BooksApp extends React.Component {
 
     render() {
         return (<div className="app">
-            <Route exact path="/" render={({history}) => (<div className="list-books">
+            <Route exact path="/" render={() => (<div className="list-books">
                     <div className="list-books-title">
                         <h1>MyReads</h1>
                     </div>
@@ -95,7 +118,6 @@ class BooksApp extends React.Component {
                                 this.state.shelves.map((shelf) => {
                                     return (<BookShelf displayClassName="bookshelf-books" key={shelf.id} shelfListForDropdown={this.state.shelves} shelfTitle={shelf.title} books={this.state.books.filter((book) => book.shelf === shelf.id)} onMoveBook={(book, shelf) => {
                                             this.moveBook(book, shelf)
-                                            history.push('/')
                                         }}/>)
                                 })
                             }
@@ -109,7 +131,7 @@ class BooksApp extends React.Component {
 
             <Route path="/search" render={({history}) => (<div className="search-books">
                     <div className="search-books-bar">
-                        <Link to="/" className="close-search">Close</Link>
+                        <Link to="/" className="close-search" onClick={()=>this.clearQuery()}>Close</Link>
                         <div className="search-books-input-wrapper">
                             {/*
                         NOTES: The search from BooksAPI is limited to a particular set of search terms.
@@ -125,12 +147,7 @@ class BooksApp extends React.Component {
                         </div>
                     </div>
 
-                    <BookShelf displayClassName="search-books-results"
-                        key="none"
-                        shelfListForDropdown={this.state.shelves}
-                        shelfTitle="Wolf"
-                        books={this.state.searchResults}
-                        onMoveBook={(book, shelf) => {
+                    <BookShelf displayClassName="search-books-results" key="none" shelfListForDropdown={this.state.shelves} shelfTitle="Results" books={this.state.searchResults} onMoveBook={(book, shelf) => {
                             this.moveBook(book, shelf)
                             history.push('/search')
                         }}/>

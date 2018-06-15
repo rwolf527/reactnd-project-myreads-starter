@@ -3,10 +3,13 @@ import BookShelfChanger from './BookShelfChanger'
 import sortBy from 'sort-by';
 
 class BookShelf extends Component {
+    bookCoverImageOrDefault(book) {
+        return (book.imageLinks && book.imageLinks.thumbnail ? book.imageLinks.thumbnail : '')
+    }
+
     render() {
         const {books, shelfListForDropdown, shelfTitle, onMoveBook, displayClassName } = this.props
         if (books) {
-            console.log(books)
             books.sort(sortBy('title'))
         }
 
@@ -26,7 +29,7 @@ class BookShelf extends Component {
                                                    style={{
                                                        width: "128px",
                                                        height: "193px",
-                                                       backgroundImage: `url(${book.imageLinks.thumbnail})`
+                                                       backgroundImage: `url(${this.bookCoverImageOrDefault(book)})`
                                                    }}>
                                                   <BookShelfChanger
                                                       shelfListForDropdown = { shelfListForDropdown }
