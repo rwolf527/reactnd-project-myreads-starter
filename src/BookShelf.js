@@ -3,7 +3,6 @@ import BookShelfChanger from './BookShelfChanger'
 
 class BookShelf extends Component {
     render() {
-        console.log(this.props);
         const {books, shelfTitle, onMoveBook } = this.props
 
         return (
