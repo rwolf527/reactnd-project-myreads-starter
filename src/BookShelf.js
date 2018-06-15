@@ -4,8 +4,11 @@ import sortBy from 'sort-by';
 
 class BookShelf extends Component {
     render() {
-        const {books, shelfListForDropdown, shelfTitle, onMoveBook } = this.props
-        books.sort(sortBy('title'))
+        const {books, shelfListForDropdown, shelfTitle, onMoveBook, displayClassName } = this.props
+        if (books) {
+            console.log(books)
+            books.sort(sortBy('title'))
+        }
 
         return (
             <div className="list-books-content">
@@ -13,10 +16,10 @@ class BookShelf extends Component {
                   <div className="bookshelf">
                     <h2 className="bookshelf-title">{shelfTitle}</h2>
 
-                        <div className="bookshelf-books">
+                        <div className={displayClassName}>
                           <ol className="books-grid">
                               { books.map(book => (
-                                  <li key={book.title}>
+                                  <li key={book.id}>
                                       <div className="book">
                                           <div className="book-top">
                                               <div className="book-cover"
